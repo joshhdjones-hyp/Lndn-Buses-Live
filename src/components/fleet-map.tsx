@@ -22,6 +22,7 @@ export type MapRoute = {
   key: string;
   segments: LatLng[][];
   stops: Stop[];
+  severity?: "minor" | "major";
 };
 
 type Pack = { track: Track; stops: Map<string, number> };
@@ -79,7 +80,11 @@ function desired(
 }
 
 function popupHtml(bus: LiveVehicle) {
-  const kind = bus.source === "gps" ? "Live GPS" : "Countdown, moving along the route";
+  const kind = bus.delayed
+    ? "Major delay · more than 15 min"
+    : bus.source === "gps"
+      ? "Live GPS"
+      : "Countdown, moving along the route";
   return `<strong>${escapeHtml(bus.lineName)} to ${escapeHtml(bus.destination)}</strong><span>${kind}</span>`;
 }
 
@@ -88,7 +93,7 @@ type LeafletNs = typeof import("leaflet");
 function busMarker(L: LeafletNs, bus: LiveVehicle) {
   const icon = L.divIcon({
     className: "bus-pin",
-    html: `<span class="bus-badge"><span class="bus-head"></span><em>${escapeHtml(bus.lineName)}</em></span>`,
+    html: `<span class="bus-badge${bus.delayed ? " is-late" : ""}"><span class="bus-head"></span><em>${escapeHtml(bus.lineName)}</em></span>`,
     iconSize: [36, 36],
     iconAnchor: [18, 18],
   });
@@ -117,7 +122,7 @@ function stopPopup(name: string, arrivals: StopDue[]) {
   const rows = arrivals
     .map((bus) => {
       const when = clockLabel(bus.seconds, bus.expected);
-      return `<span><em>${escapeHtml(bus.lineName)}</em> to ${escapeHtml(bus.destination)} · ${dueLabel(bus.seconds)}${when ? ` · ${when}` : ""}</span>`;
+      return `<span class="${bus.seconds >= 15 * 60 ? "is-late" : ""}"><em>${escapeHtml(bus.lineName)}</em> to ${escapeHtml(bus.destination)} · ${dueLabel(bus.seconds)}${when ? ` · ${when}` : ""}${bus.seconds >= 15 * 60 ? " · major delay" : ""}</span>`;
     })
     .join("");
   return `<strong>${escapeHtml(name)}</strong>${rows}`;
@@ -203,7 +208,7 @@ export function FleetMap({
         const dt = Math.min(0.04, (now - last) / 1000);
         last = now;
         const currentRoutes = routesRef.current;
-        const sig = currentRoutes.map((route) => route.key).join("|");
+        const sig = currentRoutes.map((route) => `${route.key}:${route.severity ?? "ok"}`).join("|");
         if (sig !== lineSig) {
           lineSig = sig;
           const keep = new Set(currentRoutes.map((route) => route.key));
@@ -218,9 +223,9 @@ export function FleetMap({
             lines.set(
               route.key,
               L.polyline(route.segments, {
-                color: "#e10600",
-                weight: 4,
-                opacity: 0.88,
+                color: route.severity === "major" ? "#ff7a1a" : route.severity === "minor" ? "#e8a317" : "#e10600",
+                weight: route.severity ? 6 : 4,
+                opacity: 0.92,
                 lineCap: "round",
                 lineJoin: "round",
               }).addTo(map),
@@ -339,6 +344,8 @@ export function FleetMap({
             markers.set(bus.id, pin);
           }
           pin.setLatLng([ghost.lat, ghost.lng]);
+          const badge = pin.getElement()?.querySelector<HTMLElement>(".bus-badge");
+          if (badge) badge.classList.toggle("is-late", Boolean(bus.delayed));
           const head = pin.getElement()?.querySelector<HTMLElement>(".bus-head");
           if (head) head.style.transform = `rotate(${ghost.bearing}deg)`;
           if (pin.isPopupOpen()) pin.setPopupContent(popupHtml(bus));
