@@ -34,6 +34,14 @@ export type LiveVehicle = {
   lon?: number;
   naptanId?: string;
   seconds?: number;
+  delayed?: boolean;
+};
+
+export type LineAlert = {
+  lineId: string;
+  severity: "minor" | "major";
+  title: string;
+  detail: string;
 };
 
 export type LiveResult = {
@@ -41,6 +49,7 @@ export type LiveResult = {
   mode: "gps" | "estimate";
   keyError?: string;
   note?: string;
+  alerts: LineAlert[];
 };
 
 export type FavouriteStop = {
