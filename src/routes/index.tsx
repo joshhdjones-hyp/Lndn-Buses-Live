@@ -153,7 +153,7 @@ function boundsOf(watch: Watch) {
 
 function statusLine(routeCount: number, live: LiveResult, looking: boolean) {
   if (routeCount === 0) return "Add a route, pick a direction, watch it move.";
-  if (looking && live.vehicles.length === 0) return "Finding buses on the route\u2026";
+  if (looking && live.vehicles.length === 0) return "Finding buses on the route…";
   if (live.keyError) return live.keyError;
   if (live.note) return live.note;
   if (live.vehicles.length === 0) return "No buses on this direction right now.";
