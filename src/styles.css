@@ -1,0 +1,270 @@
+@import "tailwindcss";
+
+@theme {
+  --color-bg: #0c0e12;
+  --color-surface: #16191f;
+  --color-surface-2: #1e222a;
+  --color-fg: #f4efe6;
+  --color-muted: #9a9388;
+  --color-primary: #e10600;
+  --color-primary-fg: #fff8f4;
+  --color-border: #2a2e36;
+  --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --radius-lg: 1.25rem;
+}
+
+@layer base {
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+
+  html,
+  body,
+  #root {
+    height: 100%;
+  }
+
+  body {
+    margin: 0;
+    background: var(--color-bg);
+    color: var(--color-fg);
+    font-family: var(--font-sans);
+    line-height: 1.5;
+    overscroll-behavior: none;
+  }
+}
+
+.app-shell {
+  position: relative;
+  height: 100dvh;
+  overflow: hidden;
+}
+
+.map-bar {
+  position: fixed;
+  z-index: 1100;
+  top: 0;
+  right: 0;
+  left: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: calc(0.85rem + env(safe-area-inset-top)) 1rem 0.85rem;
+  background: var(--color-bg);
+  pointer-events: none;
+}
+
+.routes-screen {
+  position: fixed;
+  z-index: 1100;
+  inset: 0;
+  overflow: auto;
+  background: var(--color-bg);
+  padding: calc(1.25rem + env(safe-area-inset-top)) 1rem calc(5.5rem + env(safe-area-inset-bottom));
+}
+
+.routes-screen[hidden] {
+  display: none;
+}
+
+.tabbar {
+  position: fixed;
+  z-index: 1200;
+  right: 0;
+  bottom: 0;
+  left: 0;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  padding-bottom: env(safe-area-inset-bottom);
+  border-top: 1px solid var(--color-border);
+  background: var(--color-surface);
+}
+
+.tab {
+  position: relative;
+  display: flex;
+  min-height: 3.5rem;
+  align-items: center;
+  justify-content: center;
+  gap: 0.4rem;
+  color: var(--color-muted);
+  font-size: 0.85rem;
+  font-weight: 600;
+}
+
+.tab[aria-current="page"] {
+  color: var(--color-fg);
+}
+
+.tab[aria-current="page"]::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  width: 2.5rem;
+  height: 2px;
+  background: var(--color-primary);
+}
+
+.tab-count {
+  min-width: 1.15rem;
+  border-radius: 999px;
+  background: var(--color-primary);
+  color: var(--color-primary-fg);
+  font-size: 0.7rem;
+  line-height: 1.15rem;
+  text-align: center;
+}
+
+.fleet-overlay {
+  z-index: 1100;
+}
+
+.fleet-map {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  height: 100%;
+  width: 100%;
+  background-color: #12151b;
+  background-image:
+    linear-gradient(rgb(244 239 230 / 0.05) 1px, transparent 1px),
+    linear-gradient(90deg, rgb(244 239 230 / 0.05) 1px, transparent 1px);
+  background-size: 3rem 3rem;
+}
+
+.leaflet-container {
+  z-index: 0;
+  height: 100%;
+  width: 100%;
+  background: transparent;
+  font-family: inherit;
+}
+
+.leaflet-top.leaflet-right {
+  top: calc(5.25rem + env(safe-area-inset-top));
+}
+
+.leaflet-bottom.leaflet-left {
+  bottom: calc(4.75rem + env(safe-area-inset-bottom));
+  top: auto;
+}
+
+.leaflet-control-attribution {
+  background: rgb(12 14 18 / 0.78) !important;
+  color: var(--color-muted) !important;
+  font-size: 0.7rem;
+  max-width: 14rem;
+}
+
+.leaflet-control-attribution a {
+  color: var(--color-fg) !important;
+}
+
+.leaflet-bar a {
+  background: var(--color-surface) !important;
+  color: var(--color-fg) !important;
+  border-color: var(--color-border) !important;
+}
+
+.leaflet-div-icon.bus-pin,
+.leaflet-div-icon.stop-pin {
+  background: transparent;
+  border: 0;
+}
+
+.stop-dot {
+  display: block;
+  width: 0.7rem;
+  height: 0.7rem;
+  margin: 0.55rem;
+  border: 2px solid var(--color-primary);
+  border-radius: 999px;
+  background: var(--color-fg);
+  box-shadow: 0 1px 4px rgb(0 0 0 / 0.45);
+}
+
+.bus-pop .leaflet-popup-content span em {
+  color: var(--color-fg);
+  font-style: normal;
+  font-weight: 700;
+}
+
+.bus-badge {
+  position: relative;
+  display: grid;
+  width: 2.25rem;
+  height: 2.25rem;
+  place-items: center;
+  border-radius: 999px;
+  background: var(--color-primary);
+  color: var(--color-primary-fg);
+  box-shadow: 0 8px 18px rgb(0 0 0 / 0.45);
+}
+
+.bus-badge em {
+  position: relative;
+  z-index: 1;
+  font-style: normal;
+  font-size: 0.72rem;
+  font-weight: 700;
+  letter-spacing: 0.01em;
+  line-height: 1;
+}
+
+.bus-head {
+  position: absolute;
+  inset: -0.4rem;
+  border-radius: 999px;
+  background: conic-gradient(from -12deg, var(--color-primary-fg) 0 22deg, transparent 22deg);
+  -webkit-mask: radial-gradient(circle at center, transparent 1rem, #000 1.05rem);
+  mask: radial-gradient(circle at center, transparent 1rem, #000 1.05rem);
+}
+
+.bus-pop .leaflet-popup-content-wrapper,
+.bus-pop .leaflet-popup-tip {
+  background: var(--color-surface);
+  color: var(--color-fg);
+  box-shadow: 0 12px 30px rgb(0 0 0 / 0.4);
+}
+
+.bus-pop .leaflet-popup-content {
+  margin: 0.7rem 0.85rem;
+  line-height: 1.4;
+}
+
+.bus-pop .leaflet-popup-content strong {
+  font-weight: 650;
+}
+
+.bus-pop .leaflet-popup-content span {
+  display: block;
+  color: var(--color-muted);
+  font-size: 0.8rem;
+}
+
+.sheet {
+  padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
+.live-dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 999px;
+  background: var(--color-primary);
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  .live-dot {
+    animation: live-pulse 1.8s ease-out infinite;
+  }
+}
+
+@keyframes live-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgb(225 6 0 / 0.55);
+  }
+  100% {
+    box-shadow: 0 0 0 0.65rem rgb(225 6 0 / 0);
+  }
+}
