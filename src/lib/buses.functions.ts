@@ -1,5 +1,5 @@
 import { createServerFn } from "@tanstack/react-start";
-import type { DirectionName, DirectionRoute, LiveResult, LiveVehicle, Stop } from "@/lib/buses";
+import type { DirectionName, DirectionRoute, LineAlert, LiveResult, LiveVehicle, Stop } from "@/lib/buses";
 import type { LatLng } from "@/lib/geo";
 
 const LINE_RE = /^[A-Za-z]{0,3}\d{1,4}[A-Za-z]?$/;
@@ -26,7 +26,7 @@ function namedEntity(name: string) {
 
 function decodeText(value: string) {
   return value
-    .replaceAll(namedEntity("harr"), "↔")
+    .replaceAll(namedEntity("harr"), "\u2194")
     .replaceAll(namedEntity("quot"), '"')
     .replaceAll(namedEntity("#39"), "'")
     .replaceAll(namedEntity("apos"), "'")
@@ -267,16 +267,78 @@ function estimatesFor(watch: WatchQuery, arrivals: Arrival[]): LiveVehicle[] {
     source: "estimate" as const,
     naptanId: arrival.naptanId,
     seconds: arrival.timeToStation,
+    delayed: arrival.timeToStation >= 15 * 60,
   }));
+}
+
+function classifyStatus(severity: number, description: string): "ok" | "minor" | "major" {
+  const text = description.toLowerCase();
+  if (severity === 10 || severity === 18 || text.includes("good service") || text.includes("no issues")) return "ok";
+  if (severity === 9 || severity === 19 || text.includes("minor")) return "minor";
+  if (
+    severity === 6 ||
+    severity === 2 ||
+    severity === 3 ||
+    severity === 1 ||
+    severity === 4 ||
+    severity === 7 ||
+    severity === 15 ||
+    severity === 16 ||
+    text.includes("severe") ||
+    text.includes("suspend") ||
+    text.includes("divert") ||
+    text.includes("closure") ||
+    text.includes("not running")
+  ) {
+    return "major";
+  }
+  return severity < 10 ? "major" : "minor";
+}
+
+async function fetchAlerts(lineIds: string[]): Promise<LineAlert[]> {
+  if (lineIds.length === 0) return [];
+  try {
+    const response = await fetch(tflUrl(`/Line/${lineIds.map(encodeURIComponent).join(",")}/Status`), {
+      signal: AbortSignal.timeout(8_000),
+    });
+    if (!response.ok) return [];
+    const rows = (await response.json()) as {
+      id?: string;
+      lineStatuses?: {
+        statusSeverity?: number;
+        statusSeverityDescription?: string;
+        reason?: string;
+        disruption?: { description?: string };
+      }[];
+    }[];
+    if (!Array.isArray(rows)) return [];
+    const alerts: LineAlert[] = [];
+    for (const row of rows) {
+      const lineId = String(row.id ?? "").toUpperCase();
+      const status = row.lineStatuses?.[0];
+      if (!lineId || !status) continue;
+      const title = decodeText(String(status.statusSeverityDescription ?? "Issue"));
+      const severity = classifyStatus(Number(status.statusSeverity ?? 10), title);
+      if (severity === "ok") continue;
+      const detail = decodeText(String(status.reason || status.disruption?.description || title)).slice(0, 220);
+      alerts.push({ lineId, severity, title, detail });
+    }
+    return alerts;
+  } catch {
+    return [];
+  }
 }
 
 export const liveBuses = createServerFn({ method: "POST" })
   .validator(watchQuery)
   .handler(async ({ data }): Promise<LiveResult> => {
     const lineIds = [...new Set(data.watches.map((watch) => watch.lineId))];
-    const arrivalLists = await Promise.all(
-      lineIds.map(async (lineId) => [lineId, await fetchArrivals(lineId, data.apiKey || undefined)] as const),
-    );
+    const [arrivalLists, alerts] = await Promise.all([
+      Promise.all(
+        lineIds.map(async (lineId) => [lineId, await fetchArrivals(lineId, data.apiKey || undefined)] as const),
+      ),
+      fetchAlerts(lineIds),
+    ]);
     const arrivals = new Map(arrivalLists.map(([lineId, result]) => [lineId, result.rows]));
     const keyError = arrivalLists.map(([, result]) => result.keyError).find(Boolean);
 
@@ -285,7 +347,7 @@ export const liveBuses = createServerFn({ method: "POST" })
       vehicles.push(...estimatesFor(watch, arrivals.get(watch.lineId) ?? []));
     }
 
-    return { vehicles, mode: "estimate", keyError };
+    return { vehicles, mode: "estimate", keyError, alerts };
   });
 
 export type StopDue = {
