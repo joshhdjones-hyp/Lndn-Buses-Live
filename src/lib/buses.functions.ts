@@ -26,7 +26,7 @@ function namedEntity(name: string) {
 
 function decodeText(value: string) {
   return value
-    .replaceAll(namedEntity("harr"), "\u2194")
+    .replaceAll(namedEntity("harr"), "↔")
     .replaceAll(namedEntity("quot"), '"')
     .replaceAll(namedEntity("#39"), "'")
     .replaceAll(namedEntity("apos"), "'")
