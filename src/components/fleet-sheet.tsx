@@ -1,7 +1,7 @@
 import { useState } from "react";
 import { X } from "lucide-react";
 import { lookupRoute } from "@/lib/buses.functions";
-import { POPULAR, watchKey, type DirectionRoute, type Watch } from "@/lib/buses";
+import { POPULAR, watchKey, type DirectionRoute, type LineAlert, type Watch } from "@/lib/buses";
 
 const LINE_RE = /^[A-Za-z]{0,3}\d{1,4}[A-Za-z]?$/;
 
@@ -9,6 +9,8 @@ export function FleetSheet({
   open,
   watches,
   counts,
+  lateCounts,
+  alerts,
   status,
   onAdd,
   onRemove,
@@ -16,6 +18,8 @@ export function FleetSheet({
   open: boolean;
   watches: Watch[];
   counts: Record<string, number>;
+  lateCounts: Record<string, number>;
+  alerts: LineAlert[];
   status: string;
   onAdd: (watch: Watch) => void;
   onRemove: (lineId: string, direction: Watch["direction"]) => void;
@@ -58,8 +62,13 @@ export function FleetSheet({
           <ul className="mt-4 grid gap-2">
             {watches.map((watch) => {
               const count = counts[watchKey(watch)] ?? 0;
+              const late = lateCounts[watchKey(watch)] ?? 0;
+              const alert = alerts.find((item) => item.lineId === watch.lineId);
               return (
-                <li key={watchKey(watch)} className="flex items-center gap-3 rounded-2xl border border-border bg-surface px-4 py-3">
+                <li
+                  key={watchKey(watch)}
+                  className={`flex items-center gap-3 rounded-2xl border bg-surface px-4 py-3 ${alert ? `is-${alert.severity}` : "border-border"}`}
+                >
                   <span className="grid size-11 shrink-0 place-items-center rounded-full bg-primary text-sm font-semibold text-primary-fg">
                     {watch.lineName}
                   </span>
@@ -67,7 +76,9 @@ export function FleetSheet({
                     <span className="block truncate text-sm font-semibold text-fg">Towards {watch.destinationName}</span>
                     <span className="block text-sm text-muted">
                       {count} {count === 1 ? "bus" : "buses"} on the map
+                      {late > 0 ? ` · ${late} over 15 min` : ""}
                     </span>
+                    {alert ? <span className={`line-chip ${alert.severity}`}>{alert.title}</span> : null}
                   </span>
                   <button
                     type="button"

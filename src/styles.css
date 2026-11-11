@@ -9,7 +9,7 @@
   --color-primary: #e10600;
   --color-primary-fg: #fff8f4;
   --color-border: #2a2e36;
-  --font-sans: "Outfit", ui-sans-serif, system-ui, sans-serif;
+  --font-sans: ui-sans-serif, system-ui, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
   --radius-lg: 1.25rem;
 }
 
@@ -245,6 +245,80 @@
 
 .sheet {
   padding-bottom: max(1rem, env(safe-area-inset-bottom));
+}
+
+.bus-badge.is-late {
+  background: #ff7a1a;
+  box-shadow: 0 0 0 3px rgb(255 122 26 / 0.45), 0 8px 18px rgb(0 0 0 / 0.45);
+}
+
+.bus-pop .is-late {
+  color: #ffb067;
+}
+
+.alert-banner {
+  position: fixed;
+  z-index: 1100;
+  top: calc(4.75rem + env(safe-area-inset-top));
+  right: 0.75rem;
+  left: 0.75rem;
+  display: grid;
+  gap: 0.1rem;
+  border: 1px solid #e8a317;
+  border-radius: 1rem;
+  background: rgb(22 25 31 / 0.94);
+  padding: 0.7rem 0.9rem;
+  pointer-events: none;
+}
+
+.alert-banner strong {
+  font-size: 0.85rem;
+  font-weight: 650;
+}
+
+.alert-banner span {
+  color: var(--color-muted);
+  font-size: 0.78rem;
+  line-height: 1.35;
+}
+
+.alert-banner.major {
+  border-color: #ff7a1a;
+}
+
+.alert-banner.major strong {
+  color: #ffb067;
+}
+
+.alert-banner.minor strong {
+  color: #f0c14a;
+}
+
+.line-chip {
+  display: inline-flex;
+  margin-top: 0.35rem;
+  border-radius: 999px;
+  padding: 0.1rem 0.55rem;
+  font-size: 0.72rem;
+  font-weight: 650;
+}
+
+.line-chip.minor {
+  background: rgb(232 163 23 / 0.18);
+  color: #f0c14a;
+}
+
+.line-chip.major {
+  background: rgb(255 122 26 / 0.18);
+  color: #ffb067;
+}
+
+.routes-screen li.is-minor {
+  border-color: #e8a317;
+}
+
+.routes-screen li.is-major {
+  border-color: #ff7a1a;
 }
 
 .live-dot {
